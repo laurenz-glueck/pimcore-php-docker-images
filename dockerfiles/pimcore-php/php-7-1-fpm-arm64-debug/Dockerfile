@@ -6,7 +6,7 @@ LABEL org.opencontainers.image.source="https://github.com/laurenz-glueck/pimcore
 ##install <xdebug>##
 RUN apt-get update && apt-get install -y --no-install-recommends \
       autoconf automake libtool nasm make pkg-config libz-dev build-essential g++ iproute2 \
-    && pecl install xdebug \
+    && pecl install xdebug-2.9.8 \
     && docker-php-ext-enable xdebug \
     && apt-get autoremove -y \
     && apt-get remove -y autoconf automake libtool nasm make pkg-config libz-dev build-essential g++ \

@@ -10,18 +10,22 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 ## install pimcore dependencies
-RUN apt-get update && apt-get install -y lsb-release \
-    && echo "deb http://deb.debian.org/debian $(lsb_release -sc)-backports main" > /etc/apt/sources.list.d/backports.list \
-    && apt-get update && apt-get install -y --no-install-recommends \
-        autoconf automake libtool nasm make gcc pkg-config libc-dev libz-dev build-essential openssl g++ \
-        zlib1g-dev libicu-dev libjpeg62-turbo-dev libbz2-dev libc-client-dev \
-        libkrb5-dev libxml2-dev libxslt1.1 libxslt1-dev locales locales-all \
-        ffmpeg html2text ghostscript libreoffice pngcrush jpegoptim exiftool poppler-utils git wget \
-        libx11-dev libjpeg-dev python3-pip opencv-data webp graphviz cmake unzip cron gzip \
-        liblcms2-dev liblqr-1-0-dev libpng-dev libopenjp2-7-dev libtiff-dev libfreetype6-dev \
-        libfontconfig1-dev libfftw3-dev libltdl-dev liblzma-dev libopenexr-dev \
-        libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-dev libzip-dev libmcrypt-dev \
-        nano nodejs openssh-client mariadb-client libonig-dev libsodium-dev libssh2-1-dev lsof zip procps
+RUN apt-get update
+RUN apt-get install -y lsb-release wget debian-archive-keyring
+RUN echo "deb http://deb.debian.org/debian $(lsb_release -sc)-backports main" > /etc/apt/sources.list.d/backports.list
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends \
+    autoconf automake libtool nasm make gcc pkg-config libc-dev libz-dev build-essential openssl g++ \
+    zlib1g-dev libicu-dev libjpeg62-turbo-dev libbz2-dev libc-client-dev \
+    libkrb5-dev libxml2-dev libxslt1.1 libxslt1-dev locales locales-all \
+    ffmpeg html2text ghostscript libreoffice pngcrush jpegoptim exiftool poppler-utils git wget \
+    libx11-dev libjpeg-dev python3-pip opencv-data webp graphviz cmake unzip cron gzip \
+    liblcms2-dev liblqr-1-0-dev libpng-dev libopenjp2-7-dev libtiff-dev libfreetype6-dev \
+    libfontconfig1-dev libfftw3-dev libltdl-dev liblzma-dev libopenexr-dev \
+    libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-dev libzip-dev libmcrypt-dev \
+    nano nodejs openssh-client mariadb-client libonig-dev libsodium-dev libssh2-1-dev lsof zip procps
+
+
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
