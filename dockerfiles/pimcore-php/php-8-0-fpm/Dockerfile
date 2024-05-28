@@ -1,4 +1,4 @@
-FROM php:8.0.14-fpm
+FROM php:8.0.30-fpm
 
 LABEL maintainer="laurenz.glueck@me.com"
 LABEL org.opencontainers.image.source="https://github.com/laurenz-glueck/pimcore-php-docker-images"
@@ -16,13 +16,14 @@ RUN apt-get update && apt-get install -y lsb-release \
         autoconf automake libtool nasm make gcc pkg-config libc-dev libz-dev build-essential openssl g++ \
         zlib1g-dev libicu-dev libbz2-dev zopfli libpng-dev libc-client-dev default-jre \
         libkrb5-dev libxml2-dev libxslt1.1 libxslt1-dev locales locales-all \
-        ffmpeg html2text ghostscript libreoffice pngcrush jpegoptim exiftool poppler-utils git wget \
+        ffmpeg html2text ghostscript pngcrush jpegoptim exiftool poppler-utils git wget \
         libx11-dev libjpeg-dev python3-pip opencv-data facedetect webp graphviz cmake ninja-build unzip cron \
-        liblcms2-dev liblqr-1-0-dev libpng-dev libjpeg-turbo-progs libopenjp2-7-dev wkhtmltopdf libtiff-dev libfreetype6-dev \
+        liblcms2-dev liblqr-1-0-dev libjpeg-turbo-progs libopenjp2-7-dev wkhtmltopdf libtiff-dev libfreetype6-dev \
         libfontconfig1-dev libfftw3-dev libltdl-dev liblzma-dev libopenexr-dev \
         libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-dev libzip-dev libmcrypt-dev nano nodejs openssh-client mariadb-client \
-        libpng-dev libfreetype6-dev libjpeg-dev libxpm-dev libwebp-dev libjpeg62-turbo-dev libonig-dev
+        libxpm-dev libwebp-dev libjpeg62-turbo-dev libonig-dev libxslt-dev
 
+RUN apt-get update && apt-get install -y libreoffice
 
 RUN curl -sfLO https://www.imagemagick.org/download/ImageMagick.tar.gz \
         && tar -xvf ImageMagick.tar.gz \
@@ -37,41 +38,27 @@ RUN curl -sfLO https://www.imagemagick.org/download/ImageMagick.tar.gz \
         && cd .. \
         && rm -rf ImageMagick*
 
-RUN docker-php-ext-configure gd -enable-gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install intl mbstring mysqli bcmath bz2 gd soap xsl pdo pdo_mysql fileinfo exif zip opcache \
-    && pecl install redis \
-    && pecl install -f xmlrpc \
-#    && pecl install imagick \
-#    && pecl install apcu \
-#    && pecl install mcrypt-1.0.4 \
-    && docker-php-ext-enable redis imagick apcu \
+RUN apt-get update && apt-get install -y libgd-dev
+
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
+RUN docker-php-ext-install intl mbstring mysqli bcmath bz2 soap xsl pdo pdo_mysql fileinfo exif zip opcache
+RUN pecl install redis
+RUN pecl install -f xmlrpc
+
+RUN docker-php-ext-enable redis imagick apcu \
     && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
     && docker-php-ext-install imap \
-    && docker-php-ext-enable imap
+    && docker-php-ext-enable imap \
+    && docker-php-ext-install sysvsem \
+    && docker-php-ext-enable sysvsem
+
+RUN docker-php-ext-install gd
 
 RUN cd ~ \
     && curl -sfLO https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz \
         && tar xvf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz \
         && mv wkhtmltox/bin/wkhtmlto* /usr/bin/ \
         && rm -rf wkhtmltox
-
-#RUN cd ~ \
-#    && git clone https://github.com/mozilla/mozjpeg.git  \
-#        && cd mozjpeg \
-#        && cmake -G"Unix Makefiles" \
-#        && make \
-#        && make install \
-#        && ln -s /opt/mozjpeg/bin/cjpeg /usr/bin/cjpeg \
-#        && cd .. \
-#        && rm -rf mozjpeg
-
-#RUN cd ~ \
-#    && git clone https://github.com/wavexx/facedetect \
-#        && pip3 install numpy opencv-python \
-#        && cd facedetect \
-#        && cp facedetect /usr/local/bin \
-#        && cd .. \
-#        && rm -rf facedetect
 
 RUN cd ~ \
     && git clone https://github.com/google/zopfli.git \
