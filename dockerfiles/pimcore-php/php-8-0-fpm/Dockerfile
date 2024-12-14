@@ -14,45 +14,104 @@ RUN apt-get update && apt-get install -y lsb-release \
     && echo "deb http://deb.debian.org/debian $(lsb_release -sc)-backports main" > /etc/apt/sources.list.d/backports.list \
     && apt-get update && apt-get install -y --no-install-recommends \
         autoconf automake libtool nasm make gcc pkg-config libc-dev libz-dev build-essential openssl g++ \
-        zlib1g-dev libicu-dev libbz2-dev zopfli libpng-dev libc-client-dev default-jre \
+        zlib1g-dev libicu-dev libjpeg62-turbo-dev libbz2-dev libc-client-dev \
         libkrb5-dev libxml2-dev libxslt1.1 libxslt1-dev locales locales-all \
-        ffmpeg html2text ghostscript pngcrush jpegoptim exiftool poppler-utils git wget \
-        libx11-dev libjpeg-dev python3-pip opencv-data facedetect webp graphviz cmake ninja-build unzip cron \
-        liblcms2-dev liblqr-1-0-dev libjpeg-turbo-progs libopenjp2-7-dev wkhtmltopdf libtiff-dev libfreetype6-dev \
+        ffmpeg html2text ghostscript libreoffice pngcrush jpegoptim exiftool poppler-utils git wget \
+        libx11-dev libjpeg-dev python3-pip opencv-data webp graphviz cmake unzip cron gzip \
+        liblcms2-dev liblqr-1-0-dev libpng-dev libopenjp2-7-dev libtiff-dev libfreetype6-dev \
         libfontconfig1-dev libfftw3-dev libltdl-dev liblzma-dev libopenexr-dev \
-        libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-dev libzip-dev libmcrypt-dev nano nodejs openssh-client mariadb-client \
-        libxpm-dev libwebp-dev libjpeg62-turbo-dev libonig-dev libxslt-dev
+        libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-bin libzip-dev libmcrypt-dev \
+        nano nodejs openssh-client mariadb-client libonig-dev libsodium-dev libssh2-1-dev lsof zip procps
 
+RUN apt-get update && apt-get install -y libwebp-dev
 RUN apt-get update && apt-get install -y libreoffice
 
-RUN curl -sfLO https://www.imagemagick.org/download/ImageMagick.tar.gz \
-        && tar -xvf ImageMagick.tar.gz \
-        && cd ImageMagick-7.* \
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
+
+RUN docker-php-ext-install bcmath
+
+RUN docker-php-ext-install bz2
+
+RUN docker-php-ext-install calendar
+
+RUN docker-php-ext-install gd
+
+RUN docker-php-ext-install exif
+
+RUN docker-php-ext-install gettext
+
+RUN docker-php-ext-install intl
+
+RUN docker-php-ext-install mbstring
+
+RUN docker-php-ext-install mysqli
+
+RUN docker-php-ext-install opcache
+
+RUN docker-php-ext-install pcntl
+
+RUN docker-php-ext-install pdo_mysql
+
+RUN docker-php-ext-install soap
+
+RUN docker-php-ext-install sockets
+
+RUN docker-php-ext-install sodium
+
+RUN docker-php-ext-install sysvmsg
+
+RUN docker-php-ext-install sysvsem
+
+RUN docker-php-ext-install sysvshm
+
+RUN docker-php-ext-install xsl
+
+RUN docker-php-ext-install zip
+
+RUN docker-php-ext-enable \
+      bcmath \
+      bz2 \
+      calendar \
+      exif \
+      gd \
+      gettext \
+      intl \
+      mbstring \
+      mysqli \
+      opcache \
+      pcntl \
+      pdo_mysql \
+      soap \
+      sockets \
+      sodium \
+      sysvmsg \
+      sysvsem \
+      sysvshm \
+      xsl \
+      zip
+
+COPY ./ImageMagick-7.1.1-33.tar.xz /ImageMagick-7.1.1-33.tar.xz
+
+RUN cd / \
+        && tar -xvf ImageMagick-7.1.1-33.tar.xz \
+        && cd ImageMagick-7.1.1-33 \
         && ./configure \
         && make \
         && make install \
         && ldconfig /usr/local/lib \
-        && pecl install imagick \
-        && pecl install apcu \
-        && printf "\n" | pecl install mcrypt-1.0.4 \
         && cd .. \
-        && rm -rf ImageMagick*
+        && rm -rf ImageMagick-7.1.1-33 \
+        && rm ImageMagick-7.1.1-33.tar.xz
 
-RUN apt-get update && apt-get install -y libgd-dev
-
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
-RUN docker-php-ext-install intl mbstring mysqli bcmath bz2 soap xsl pdo pdo_mysql fileinfo exif zip opcache
-RUN pecl install redis
-RUN pecl install -f xmlrpc
-
-RUN docker-php-ext-enable redis imagick apcu \
+RUN pecl install redis \
+    && pecl install imagick-3.7.0 \
+    && pecl install apcu \
+    && pecl channel-update pecl.php.net \
+    && pecl install mcrypt-1.0.4 \
+    && docker-php-ext-enable redis imagick apcu \
     && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
     && docker-php-ext-install imap \
-    && docker-php-ext-enable imap \
-    && docker-php-ext-install sysvsem \
-    && docker-php-ext-enable sysvsem
-
-RUN docker-php-ext-install gd
+    && docker-php-ext-enable imap
 
 RUN cd ~ \
     && curl -sfLO https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz \
@@ -89,8 +148,6 @@ RUN cd ~ \
 RUN apt-get install -y curl software-properties-common rsync grsync \
     \
     && apt-get install -y php-redis \
-    \
-    && pip3 install datadog \
     \
     && apt-get autoremove -y \
         && apt-get remove -y autoconf libtool nasm pkg-config libz-dev build-essential g++ \

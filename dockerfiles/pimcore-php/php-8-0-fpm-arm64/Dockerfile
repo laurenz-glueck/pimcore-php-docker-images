@@ -20,10 +20,11 @@ RUN apt-get update && apt-get install -y lsb-release \
         libx11-dev libjpeg-dev python3-pip opencv-data webp graphviz cmake unzip cron gzip \
         liblcms2-dev liblqr-1-0-dev libpng-dev libopenjp2-7-dev libtiff-dev libfreetype6-dev \
         libfontconfig1-dev libfftw3-dev libltdl-dev liblzma-dev libopenexr-dev \
-        libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-dev libzip-dev libmcrypt-dev \
+        libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-bin libzip-dev libmcrypt-dev \
         nano nodejs openssh-client mariadb-client libonig-dev libsodium-dev libssh2-1-dev lsof zip procps
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN apt-get update && apt-get install -y libwebp-dev
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 
 RUN docker-php-ext-install \
       bcmath \
@@ -69,18 +70,21 @@ RUN docker-php-ext-enable \
       xsl \
       zip
 
-RUN wget http://www.imagemagick.org/download/ImageMagick.tar.gz \
-        && tar -xvf ImageMagick.tar.gz \
-        && cd ImageMagick-7.* \
+COPY ./ImageMagick-7.1.1-33.tar.xz /ImageMagick-7.1.1-33.tar.xz
+
+RUN cd / \
+        && tar -xvf ImageMagick-7.1.1-33.tar.xz \
+        && cd ImageMagick-7.1.1-33 \
         && ./configure \
         && make \
         && make install \
         && ldconfig /usr/local/lib \
         && cd .. \
-        && rm -rf ImageMagick*
+        && rm -rf ImageMagick-7.1.1-33 \
+        && rm ImageMagick-7.1.1-33.tar.xz
 
 RUN pecl install redis \
-    && pecl install imagick \
+    && pecl install imagick-3.7.0 \
     && pecl install apcu \
     && pecl channel-update pecl.php.net \
     && pecl install mcrypt-1.0.4 \

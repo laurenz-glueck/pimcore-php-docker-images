@@ -1,4 +1,4 @@
-FROM ghcr.io/laurenz-glueck/pimcore-php-docker-images/pimcore-php/php-8-0-fpm-arm64:1.0
+FROM ghcr.io/laurenz-glueck/pimcore-php-docker-images/pimcore-php/php-8-0-fpm-arm64:1.5
 
 LABEL maintainer="laurenz.glueck@me.com"
 LABEL org.opencontainers.image.source="https://github.com/laurenz-glueck/pimcore-php-docker-images"
