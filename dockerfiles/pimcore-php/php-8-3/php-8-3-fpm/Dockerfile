@@ -109,8 +109,9 @@ RUN install-php-extensions imagick/imagick@28f27044e435a2b203e32675e942eb8de620e
 #        && mv wkhtmltox/bin/wkhtmlto* /usr/bin/ \
 #        && rm -rf wkhtmltox
 
+## pinned to the version of 1.0, master (5.x) no longer builds like this
 RUN cd ~ \
-    && git clone https://github.com/mozilla/mozjpeg.git  \
+    && git clone --depth 1 --branch v4.1.5 https://github.com/mozilla/mozjpeg.git  \
         && cd mozjpeg \
         && cmake -G"Unix Makefiles" \
         && make \
