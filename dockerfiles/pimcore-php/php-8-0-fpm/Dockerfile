@@ -1,4 +1,4 @@
-FROM php:8.0.30-fpm
+FROM ghcr.io/laurenz-glueck/pimcore-php-docker-images/php-base/php-8-0-fpm-bullseye:8.0.30-p1
 
 LABEL maintainer="laurenz.glueck@me.com"
 LABEL org.opencontainers.image.source="https://github.com/laurenz-glueck/pimcore-php-docker-images"
@@ -11,7 +11,6 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 
 ## install pimcore dependencies
 RUN apt-get update && apt-get install -y lsb-release \
-    && echo "deb http://deb.debian.org/debian $(lsb_release -sc)-backports main" > /etc/apt/sources.list.d/backports.list \
     && apt-get update && apt-get install -y --no-install-recommends \
         autoconf automake libtool nasm make gcc pkg-config libc-dev libz-dev build-essential openssl g++ \
         zlib1g-dev libicu-dev libjpeg62-turbo-dev libbz2-dev libc-client-dev \
@@ -20,7 +19,7 @@ RUN apt-get update && apt-get install -y lsb-release \
         libx11-dev libjpeg-dev python3-pip opencv-data webp graphviz cmake unzip cron gzip \
         liblcms2-dev liblqr-1-0-dev libpng-dev libopenjp2-7-dev libtiff-dev libfreetype6-dev \
         libfontconfig1-dev libfftw3-dev libltdl-dev liblzma-dev libopenexr-dev \
-        libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-bin libzip-dev libmcrypt-dev \
+        libwmf-dev libdjvulibre-dev libpango1.0-dev libxext-dev libxt-dev librsvg2-dev libzip-dev libmcrypt-dev \
         nano nodejs openssh-client mariadb-client libonig-dev libsodium-dev libssh2-1-dev lsof zip procps
 
 RUN apt-get update && apt-get install -y libwebp-dev
@@ -90,24 +89,28 @@ RUN docker-php-ext-enable \
       xsl \
       zip
 
-COPY ./ImageMagick-7.1.1-33.tar.xz /ImageMagick-7.1.1-33.tar.xz
+COPY ./ImageMagick-6.9.10-33.tar.xz /ImageMagick-6.9.10-33.tar.xz
 
 RUN cd / \
-        && tar -xvf ImageMagick-7.1.1-33.tar.xz \
-        && cd ImageMagick-7.1.1-33 \
+        && tar -xvf ImageMagick-6.9.10-33.tar.xz \
+        && cd ImageMagick-6.9.10-33 \
         && ./configure \
-        && make \
+        && make -j"$(nproc)" \
         && make install \
         && ldconfig /usr/local/lib \
         && cd .. \
-        && rm -rf ImageMagick-7.1.1-33 \
-        && rm ImageMagick-7.1.1-33.tar.xz
+        && rm -rf ImageMagick-6.9.10-33 \
+        && rm ImageMagick-6.9.10-33.tar.xz
 
-RUN pecl install redis \
-    && pecl install imagick-3.7.0 \
-    && pecl install apcu \
-    && pecl channel-update pecl.php.net \
-    && pecl install mcrypt-1.0.4 \
+## pecl.php.net often answers with HTTP 500, so download with retries and install from the local file
+RUN for p in redis-6.0.2 imagick-3.5.1 apcu-5.1.23 mcrypt-1.0.4; do \
+        curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 -o /tmp/$p.tgz https://pecl.php.net/get/$p.tgz || exit 1; \
+    done \
+    && pecl install /tmp/redis-6.0.2.tgz \
+    && pecl install /tmp/imagick-3.5.1.tgz \
+    && pecl install /tmp/apcu-5.1.23.tgz \
+    && pecl install /tmp/mcrypt-1.0.4.tgz \
+    && rm /tmp/*.tgz \
     && docker-php-ext-enable redis imagick apcu \
     && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
     && docker-php-ext-install imap \
@@ -128,22 +131,16 @@ RUN cd ~ \
         && rm -rf zopfli
 
 RUN cd ~ \
-    && curl -sfLO http://static.jonof.id.au/dl/kenutils/pngout-20150319-linux.tar.gz \
+    && curl -sfLO https://www.jonof.id.au/files/kenutils/pngout-20150319-linux.tar.gz \
+        && echo "078a9ec068cc4d79ceca332b9e2117151c4584ee0e917e253d4fe80703499b47 *pngout-20150319-linux.tar.gz" | sha256sum -c - \
         && tar -xf pngout-20150319-linux.tar.gz \
         && rm pngout-20150319-linux.tar.gz \
         && cp pngout-20150319-linux/x86_64/pngout /bin/pngout \
         && cd .. \
         && rm -rf pngout-20150319-linux
 
-RUN cd ~ \
-    && curl -sfLO http://prdownloads.sourceforge.net/advancemame/advancecomp-1.17.tar.gz \
-        && tar zxvf advancecomp-1.17.tar.gz \
-        && cd advancecomp-1.17 \
-        && ./configure \
-        && make \
-        && make install \
-        && cd .. \
-        && rm -rf advancecomp-1.17
+## advancecomp-1.17 is no longer downloadable, use the Debian package (same advpng/advdef commands, in /usr/bin)
+RUN apt-get update && apt-get install -y --no-install-recommends advancecomp
 
 RUN apt-get install -y curl software-properties-common rsync grsync \
     \
